@@ -1,1 +1,1 @@
-PLACEHOLDER: AI model will be re-trained and saved here.
+DUMMY MODEL - PLACEHOLDER FOR RENDER DEPLOYMENT
