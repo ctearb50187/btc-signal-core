@@ -1,17 +1,15 @@
 
 from fastapi import FastAPI, Request
-import joblib
-import pandas as pd
+from fastapi.responses import FileResponse
+import os
 
 app = FastAPI()
-model = None
 
-@app.on_event("startup")
-def load_model():
-    global model
-    model = "DUMMY_MODEL"
+@app.get("/")
+def homepage():
+    return FileResponse("index.html")
 
 @app.post("/ai_predict")
 async def ai_predict(request: Request):
     data = await request.json()
-    return {"prediction": "buy"}  # placeholder response
+    return {"prediction": "buy"}  # 模擬回傳值，後續可替換為 AI 引擎
