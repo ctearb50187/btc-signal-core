@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: btc-event-bot
+    env: python
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip==25.1
+      pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true

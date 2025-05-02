@@ -1,21 +1,31 @@
-# BTC Event Bot PRO v2
+# BTC Event Bot Optimized v2.1
 
-## 功能亮點
+## ✅ 功能特色
 
-- Webhook 事件接收
-- 自動下注 Binance 合約（模擬邏輯）
-- Telegram 推播訊號
-- SQLite 紀錄訊號歷史
+- 支援 TradingView Webhook 觸發自動下注
+- 自動推播訊號到 Telegram
+- 使用 SQLite 紀錄所有訊號紀錄（內建模組）
 
-## 啟動方式
+## 🚀 快速啟動
 
+1. 安裝依賴
 ```
 pip install -r requirements.txt
+```
+
+2. 啟動伺服器
+```
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-## TradingView Webhook JSON 範例
+## 🔗 TradingView Webhook 設定
 
+Webhook URL:
+```
+https://你的-render-url.onrender.com/webhook
+```
+
+JSON Payload 範例：
 ```json
 {
   "strategy": {
@@ -24,9 +34,8 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 }
 ```
 
-## Render 設定
+## ✅ Render Start Command
 
-Start Command:
 ```
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
