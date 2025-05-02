@@ -1,74 +1,43 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-import asyncio
-import os
-import sqlite3
-from binance_client import place_event_bet
-from telegram_bot import send_telegram_alert
-from logger import log_action
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+import joblib
+import pandas as pd
+import numpy as np
+from ta.momentum import RSIIndicator, StochasticOscillator
+from ta.trend import MACD, SMAIndicator
+from ta.volatility import BollingerBands
 
 app = FastAPI()
+model = joblib.load("xgb_btc_direction_model.pkl")
 
-@app.get("/", response_class=HTMLResponse)
-async def homepage():
-    return """
-    <html>
-        <head>
-            <title>BTC Signal Core</title>
-            <style>
-                body { font-family: Arial; text-align: center; padding: 50px; }
-                h1 { color: #0096FF; }
-                p { font-size: 18px; }
-            </style>
-        </head>
-        <body>
-            <h1>🚀 BTC Signal Core</h1>
-            <p>你的訊號中樞已啟動！</p>
-            <p>此應用專為 Binance 事件合約而設計，並支援 TradingView Webhook、Telegram 推播與 SQLite 記錄。</p>
-            <p><a href='/history'>查看訊號紀錄</a></p>
-        </body>
-    </html>
-    """
+@app.get("/ai_predict")
+def ai_predict(open: float, high: float, low: float, close: float):
+    # Construct one-row DataFrame
+    data = pd.DataFrame([{
+        "open": open,
+        "high": high,
+        "low": low,
+        "close": close
+    }])
 
-@app.get("/history", response_class=HTMLResponse)
-async def history():
-    db_path = os.path.join(os.path.dirname(__file__), "signals.db")
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS actions (timestamp TEXT, action TEXT)")
-    records = cursor.execute("SELECT timestamp, action FROM actions ORDER BY timestamp DESC").fetchall()
-    conn.close()
+    # Compute technical indicators
+    data["rsi"] = RSIIndicator(close=data["close"]).rsi()
+    data["macd"] = MACD(close=data["close"]).macd_diff()
+    data["sma"] = SMAIndicator(close=data["close"], window=20).sma_indicator()
+    bb = BollingerBands(close=data["close"])
+    data["bb_bbm"] = bb.bollinger_mavg()
+    data["bb_bbh"] = bb.bollinger_hband()
+    data["bb_bbl"] = bb.bollinger_lband()
+    stoch = StochasticOscillator(high=data["high"], low=data["low"], close=data["close"])
+    data["stoch_k"] = stoch.stoch()
+    data["stoch_d"] = stoch.stoch_signal()
 
-    rows = "".join(f"<tr><td>{t}</td><td>{a}</td></tr>" for t, a in records)
-    return f"""
-    <html>
-        <head>
-            <title>歷史訊號 - BTC Signal Core</title>
-            <style>
-                body {{ font-family: Arial; padding: 20px; }}
-                table {{ width: 100%; border-collapse: collapse; }}
-                th, td {{ border: 1px solid #ccc; padding: 8px; text-align: center; }}
-                th {{ background-color: #f2f2f2; }}
-            </style>
-        </head>
-        <body>
-            <h1>📜 歷史訊號紀錄</h1>
-            <table>
-                <tr><th>時間</th><th>方向</th></tr>
-                {rows}
-            </table>
-            <br><a href="/">⬅ 回首頁</a>
-        </body>
-    </html>
-    """
+    # Drop NA and predict
+    data.dropna(inplace=True)
+    if data.empty:
+        return JSONResponse({"error": "Insufficient data for indicators"}, status_code=400)
 
-@app.post("/webhook")
-async def webhook(request: Request):
-    data = await request.json()
-    signal = data.get("strategy", {}).get("order_action", "none")
-
-    if signal in ["buy", "sell"]:
-        asyncio.create_task(place_event_bet(signal))
-        send_telegram_alert(f"📢 Webhook 訊號接收：{signal.upper()}")
-        log_action(signal)
-    return {"status": "ok", "action": signal}
+    features = ["rsi", "macd", "sma", "bb_bbm", "bb_bbh", "bb_bbl", "stoch_k", "stoch_d"]
+    prediction = model.predict(data[features])[0]
+    label_map = {0: "buy", 1: "sell", 2: "hold"}
+    return {"prediction": label_map[prediction]}

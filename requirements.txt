@@ -1,4 +1,7 @@
 fastapi
 uvicorn
-python-binance
-requests
+joblib
+scikit-learn
+xgboost
+ta
+pandas
