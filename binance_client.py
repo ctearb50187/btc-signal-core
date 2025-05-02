@@ -6,4 +6,3 @@ client = Client(api_key, api_secret)
 
 def place_event_bet(direction):
     print(f"自動下注方向：{direction.upper()}")
-    # 加上事件合約下注邏輯
