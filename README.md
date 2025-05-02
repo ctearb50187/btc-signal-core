@@ -1,18 +1,21 @@
-# BTC 事件合約自動下注系統（穩定版 SDK）
+# BTC Event Bot PRO v2
+
+## 功能亮點
+
+- Webhook 事件接收
+- 自動下注 Binance 合約（模擬邏輯）
+- Telegram 推播訊號
+- SQLite 紀錄訊號歷史
 
 ## 啟動方式
 
-1. 安裝依賴
 ```
 pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-2. 啟動伺服器
-```
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
+## TradingView Webhook JSON 範例
 
-3. TradingView Webhook 設定範例
 ```json
 {
   "strategy": {
@@ -21,10 +24,9 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 }
 ```
 
-4. Render 設定
-- Python 環境
-- Build command 留空
-- Start command 設為：
+## Render 設定
+
+Start Command:
 ```
-uvicorn main:app --host 0.0.0.0 --port 10000
+uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
