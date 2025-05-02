@@ -1,5 +1,3 @@
 fastapi
 uvicorn
-binance
-cryptography
-ccxt
+python-binance
